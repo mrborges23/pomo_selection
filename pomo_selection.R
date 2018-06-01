@@ -261,7 +261,7 @@ for (i in 1:sim) {
   sigma <- mhsigma(N,pi,rho,sigma,data,b,tun3)
   
   if (i == usim[p]) {
-    print(paste("% MCMC: ", round(i*100/sim,1)," | pi: ",round(pi,3)," rho:",round(rho,5)," sigma:",round(rho,3),sep=""))
+    print(paste("% MCMC: ", round(i*100/sim,1)," | pi: ",paste(round(pi,3),collapse=" ")," rho:",paste(round(rho,5),collapse=" ")," sigma:",paste(round(sigma,3),collapse=" "),sep=""))
     smcmc[p,] <- c(pi,rho,sigma)
     p<-p+1
   }
@@ -281,5 +281,3 @@ for (i in 1:14) {
   lines(cumsum(smcmc[,i])/(1:length(smcmc[,i])),col="blue")
 }
 dev.off()
-
-
