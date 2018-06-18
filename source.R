@@ -161,7 +161,7 @@ mhsigma <- function(N,pi,rho,sigma0,data,b,tun){
 }
 
 #TUNING
-mcmctunninf <- function(tun,sim,lag) {
+mcmctunning <- function(N,data,a,b,c,tun,sim,lag) {
   
  mtun <- matrix(NA,ncol=14,nrow=length(tun))
 
@@ -221,4 +221,35 @@ mcmctunninf <- function(tun,sim,lag) {
   return(c(tun1,tun2,tun3))
 }
 
+mcmc <- function(N,data,a,b,c,sim,lag,vtun) {
+  
+  tun1 <- vtun[1]
+  tun2 <- vtun[2]
+  tun3 <- vtun[3]
+  
+  #RANDOM STARTING POINTS
+  pi    <- rgamma(4,1,1)
+  pi    <- pi/sum(pi)
+  rho   <- rexp(6)
+  sigma <- c(1,rexp(3))
+  
+  usim <- seq(lag,sim,lag)
 
+  smcmc <- matrix(NA,ncol=14,nrow=length(usim))
+
+  p <- 1
+  for (i in 1:sim) {
+    
+    pi    <- mhpi(N,pi,rho,sigma,data,a,tun1)
+    rho   <- mhrho(N,pi,rho,sigma,data,c,tun2)
+    sigma <- mhsigma(N,pi,rho,sigma,data,b,tun3)
+    
+    if (i == usim[p]) {
+      print(paste("% MCMC: ", round(i*100/sim,1)," | pi: ",paste(round(pi,3),collapse=" ")," rho:",paste(round(rho,5),collapse=" ")," sigma:",paste(round(sigma,3),collapse=" "),sep=""))
+      smcmc[p,] <- c(pi,rho,sigma)
+      p<-p+1
+    }
+  }
+  
+  return(smcmc)
+}
