@@ -161,10 +161,11 @@ mhsigma <- function(N,pi,rho,sigma0,data,b,tun){
 }
 
 #TUNING
-mcmctunning <- function(N,data,a,b,c,tun,sim,lag) {
+mcmctunning <- function(N,data,a,b,c,sim,lag,tun) {
   
- mtun <- matrix(NA,ncol=14,nrow=length(tun))
-
+  mtun <- matrix(NA,ncol=14,nrow=length(tun))
+  ipar <- rep(0,14)
+  
   for (t in 1:length(tun)) {
   
     #RANDOM STARTING POINTS
@@ -192,6 +193,7 @@ mcmctunning <- function(N,data,a,b,c,tun,sim,lag) {
       }
     }
   
+    ipar <- smcmc[length(usim),] + ipar
     for (j in 1:14) {
       mtun[t,j] <- (length(unique(smcmc[,j]))-1)/nrow(smcmc)
     }
@@ -218,20 +220,20 @@ mcmctunning <- function(N,data,a,b,c,tun,sim,lag) {
 
   tun3 <- (0.234-y1)*(x2-x1)/(y2-y1)+x1 
   
-  return(c(tun1,tun2,tun3))
+  return(list(ipar=ipar/length(tun),vtun=c(tun1,tun2,tun3)))
 }
 
-mcmc <- function(N,data,a,b,c,sim,lag,vtun) {
+#mcmc mutation + selection
+mcmc <- function(N,data,a,b,c,sim,lag,ipar,vtun) {
   
   tun1 <- vtun[1]
   tun2 <- vtun[2]
   tun3 <- vtun[3]
   
   #RANDOM STARTING POINTS
-  pi    <- rgamma(4,1,1)
-  pi    <- pi/sum(pi)
-  rho   <- rexp(6)
-  sigma <- c(1,rexp(3))
+  pi    <- ipar[1:4]
+  rho   <- ipar[5:10]
+  sigma <- ipar[11:14]
   
   usim <- seq(lag,sim,lag)
 
@@ -252,4 +254,71 @@ mcmc <- function(N,data,a,b,c,sim,lag,vtun) {
   }
   
   return(smcmc)
+}
+
+#mcmc mutation
+mcmcm <- function(N,data,a,b,c,sim,lag,ipar,vtun) {
+  
+  tun1 <- vtun[1]
+  tun2 <- vtun[2]
+  tun3 <- vtun[3]
+  
+  #RANDOM STARTING POINTS
+  pi    <- ipar[1:4]
+  rho   <- ipar[5:10]
+  sigma <- rep(1,4)
+  
+  usim <- seq(lag,sim,lag)
+  
+  smcmc <- matrix(NA,ncol=14,nrow=length(usim))
+  
+  p <- 1
+  for (i in 1:sim) {
+    
+    pi    <- mhpi(N,pi,rho,sigma,data,a,tun1)
+    rho   <- mhrho(N,pi,rho,sigma,data,c,tun2)
+    sigma <- rep(1,4)
+    
+    if (i == usim[p]) {
+      print(paste("% MCMC: ", round(i*100/sim,1)," | pi: ",paste(round(pi,3),collapse=" ")," rho:",paste(round(rho,5),collapse=" ")," sigma:",paste(round(sigma,3),collapse=" "),sep=""))
+      smcmc[p,] <- c(pi,rho,sigma)
+      p<-p+1
+    }
+  }
+  
+  return(smcmc)
+}
+
+
+plotmcmc <- function(smcmc,ipar) {
+  npar <- c("piA","piC","piG","piT","rhoAC","rhoAG","rhoAT","rhoCG","rhoCT","rhoGT","sigmaA","sigmaC","sigmaG","sigmaT")
+  par(mfrow=c(7,2),mar=c(2,2,2,2))
+  for (i in 1:14) {
+    plot(smcmc[,i],col="grey",xlab="",ylab="",main=npar[i])
+    lines(cumsum(smcmc[,i])/(1:length(smcmc[,i])),col="blue")
+    abline(h=par1[i],col="red")
+  }
+}
+
+plotmutationrates <- function(smcmc,N,slog)  {
+  mmut <- matrix(NA,ncol=12,nrow=nrow(smcmc))
+  i1  <- c(1,1,2,2,3,3,4,4,5,5,6,6)
+  i2  <- c(2,1,3,1,4,1,3,2,4,2,4,3)
+  mut <- c("muAC","muCA","muAG","muGA","muAT","muTA","muCG","muGC","muCT","muTC","muGT","muTG") 
+  for (i in 1:12) {
+    mmut[,i] <- N*smcmc[,i1[i]+4]*smcmc[,i2[i]]
+  }
+  
+  boxplot(mmut,ylab="scaled mut rates",xaxt='n')
+  axis(1,at=1:12,labels=mut)
+  if (slog==T) {
+    boxplot(log(mmut),ylab="scaled mut rates",xaxt='n')
+    axis(1,at=1:12,labels=mut)
+  }
+} 
+  
+plotselectionrates <- function(smcmc,N) {
+  sig <- c("sigmaC","sigmaG","sigmaT") 
+  boxplot(N*(smcmc[,12:14]-1),ylab="scaled sel coefficients",xaxt='n')
+  axis(1,at=1:3,labels=sig)
 }
