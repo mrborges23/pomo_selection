@@ -1,10 +1,12 @@
 # pomo_selection
-A R code to infer population parameters (mutation rates and selection coefficients) from population data (allele counts). The algorithm performs Bayesian inference.
+This algorithms was built to quantify the patters of GC-bias gene conversion is great apes’ populations. Our strategy consisted in estimating the population parameter (mutation rates and selection coefficietns) using the stationary distribution of a multivariate Moran model with boundary mutations and allelic selection. The input data is the vector of allele counts, you can check how to buil in point (3). The inferential framework is use is Bayesian. 
 
-Please follow the example.R code for some examples.
+1. Before running the algortihms or the examples provided please make sure you have the R package “MCMCpack” installed!
 
-How to build the allele counts vector.
-Imagine an alignment of 20 sites for 4 individuals of the same population.
+2. You can follow the example.R code for some simulated and real examples.
+
+3. How to build the allele counts vector.
+Consier an alignment of 20 sites for 4 individuals of the same population.
 
       1       5   * * * 10    * * 15    *   20
 Ind1  C G T A A G G G T C G T C T G C T A T A
@@ -40,6 +42,7 @@ States	Counts
 
 Note: The order of the monomorphic {A,C,G,T} and the polymorphic {1A:(N-1)C,...(N-1)A:1C,1A:(N-1)G,...,(N-1)A:1G,1A:(N-1)T,…,(N-1)A:1T,1C:(N-1)G,...,(N-1C):1G,1C:(N-1)T,...,(N-1)C:1T,1G:(N-1)T,…,(N-1)G:1T} states should be respected; incorrect labels may be returned if this order is not respected!
 
-Check the input file counts_pongo_pygmaeus.txt.
+Check the input file counts_pongo_pygmaeus.txt. 
 
-Cite us:
+4. Cite us:
+
